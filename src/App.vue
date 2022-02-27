@@ -1,49 +1,40 @@
 <template>
-  <v-app>
-    <v-main class="pa-3">
-      <h1>Рисовалка</h1>
-      <vue-drawing-canvas
-        ref="sketch"
-        :canvasId="sketch"
-        :image.sync="image"
-        :width="width"
-        backgroundColor="#fff0"
-        :height="height"
-        :lineWidth="line"
-        saveAs="png"
-        :styles="{
-          border: 'solid 3px #000',
-        }"
-      />
-      <vue-drawing-canvas
-      class="ml-2"
-        ref="thumbnail"
-        :canvasId="thumbnail"
-        :lock=true
-        :image.sync="image"
-        :width="28"
-        :height="28"
-        saveAs="png"
-        :styles="{
-          border: 'solid 1px #000',
-        }"
-      />
-      <div class="button-container">
-      <v-btn @click="$refs.sketch.reset()" color="primary" class="pa-5">
-        <v-icon class="pr-1">mdi-eraser</v-icon>
-          Очистить</v-btn>
-        <div class="ml-3">
-          <v-btn class="pa-5" color="primary" @click="predict()">Распознать</v-btn>
+  <v-app class="">
+    <div class="pa-3">
 
-          <v-btn class="pa-5" color="primary" :disabled="btnIsActive"  @click="calculateWeights()">Инициализировать веса</v-btn>
-          <v-btn class="pa-5" color="primary" @click="recalculateWeights()">Корректировка</v-btn>
-          <v-btn class="pa-5" color="primary" @click="save(weightMatrix)">Сохранить веса</v-btn>
-          <input type="file" id="load" @change="(e) => load(e)"> Загрузить веса
-          <v-btn @click="test">Тест</v-btn>
+      <v-sheet class="">
+        <h1 class="">Рисовалка</h1>
+        <vue-drawing-canvas
+          ref="sketch"
+          :canvasId="sketch"
+          :image.sync="image"
+          :width="width"
+          backgroundColor="#fff0"
+          :height="height"
+          :lineWidth="line"
+          saveAs="png"
+          :styles="{
+            border: 'solid 3px #000',
+          }"
+        />
+      </v-sheet>
+
+      <v-sheet class="my-2">
+        <div class="mr-4">
+          <v-btn color="primary" @click="$refs.sketch.reset()" class="mr-2"><v-icon>mdi-eraser</v-icon></v-btn>
+          <v-btn color="primary" @click="predict()">Распознать</v-btn>
         </div>
-      </div>
-    <!-- </div> -->
-    </v-main>
+        <div class="py-2">
+          <v-btn color="primary" @click="recalculateWeights()" class="mr-4">Корректировка</v-btn>
+        </div>
+        <div class="">
+          <v-btn color="primary" @click="save(weightMatrix)">Сохранить веса</v-btn>
+           <!-- <input type="file" id="load" @change="(e) => load(e)"> Загрузить веса -->
+           <!-- <v-btn @click="test()"></v-btn> -->
+        </div>
+      </v-sheet>
+
+    </div>
   </v-app>
 </template>
 
@@ -67,37 +58,39 @@ export default {
     imageSmall: '',
     sketch: "sketch",
     thumbnail: "thumbnail",
-    btnIsActive: false,
     imageArray: null,
     weightMatrix: null,
     neuroSum: 0,
+    empty: true,
   }),
 
   methods: {
     test(){
-      console.log(this.weightMatrix)
+      console.log(this.imageArray)
     },
 
     calculateWeights(){
-      this.btnIsActive = true
       let weightMax = 0.3
       let weightMin = -weightMax
       this.weightMatrix = this.initWeights(this.width, this.height, weightMax, weightMin)
     },
     
     predict(){
-      this.imageArray = this.imageData(this.width, this.height)
-      this.neuroSum = this.calculateSum(this.imageArray, this.weightMatrix)
-      if (this.neuroSum >= 0){
-        alert('Крест')
+      if (this.$refs.sketch.isEmpty() == false){
+        this.imageArray = this.imageData(this.width, this.height)
+        this.neuroSum = this.calculateSum(this.imageArray, this.weightMatrix)
+        if (this.neuroSum >= 0){
+          alert('Крест')
+        }
+        else{
+          alert('Круг')
+        }
       }
-      else{
-        alert('Круг')
-      }
+      else alert('Нарисуйте что-нибудь')
     },
 
     recalculateWeights(){
-      let speedLearn = 0.5
+      let speedLearn = 0.3
       let error = 1 - this.neuroSum
       for (let i = 0; i < this.imageArray.length; i++) {
         if (this.imageArray[i] === 1){
@@ -118,7 +111,6 @@ export default {
           newArray[i] = 1
         }
       }
-      console.log(newArray)
       return newArray
     },
 
@@ -180,6 +172,12 @@ export default {
     }
     
   },
+  computed: {
+
+  },
+  mounted(){
+    this.calculateWeights()
+  }
   
 };
 
