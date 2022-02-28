@@ -24,13 +24,17 @@
           <v-btn color="primary" @click="$refs.sketch.reset()" class="mr-2"><v-icon>mdi-eraser</v-icon></v-btn>
           <v-btn color="primary" @click="predict()">Распознать</v-btn>
         </div>
-        <div class="py-2">
-          <v-btn color="primary" @click="recalculateWeights()" class="mr-4">Корректировка</v-btn>
+        <div class="mr-4 my-2">
+          <v-btn color="primary" @click="setCross(); recalculateWeights()" class="mr-2">Крестик </v-btn>
+          <v-btn color="primary" @click="setCircle(); recalculateWeights()">Нолик</v-btn>
         </div>
+        <!-- <div class="py-2">
+          <v-btn color="primary" @click="recalculateWeights()" class="mr-4">Корректировка</v-btn>
+        </div> -->
         <div class="">
           <v-btn color="primary" @click="save(weightMatrix)">Сохранить веса</v-btn>
-           <!-- <input type="file" id="load" @change="(e) => load(e)"> Загрузить веса -->
-           <!-- <v-btn @click="test()"></v-btn> -->
+           <!-- <input type="file" id="load" @change="(e) => load(e)">  -->
+           <v-btn @click="test()"></v-btn>
         </div>
       </v-sheet>
 
@@ -54,19 +58,19 @@ export default {
     width: 150,
     height: 150,
     canvas: "canva",
-    line: 10,
+    line: 25,
     imageSmall: '',
     sketch: "sketch",
     thumbnail: "thumbnail",
     imageArray: null,
     weightMatrix: null,
     neuroSum: 0,
-    empty: true,
+    error: 0,
   }),
 
   methods: {
     test(){
-      console.log(this.imageArray)
+      console.log(this.weightMatrix)
     },
 
     calculateWeights(){
@@ -85,16 +89,16 @@ export default {
         else{
           alert('Круг')
         }
+        this.$refs.sketch.reset()
       }
       else alert('Нарисуйте что-нибудь')
     },
 
     recalculateWeights(){
-      let speedLearn = 0.3
-      let error = 1 - this.neuroSum
+      let speedLearn = 0.7
       for (let i = 0; i < this.imageArray.length; i++) {
         if (this.imageArray[i] === 1){
-          this.weightMatrix[i] = Number((this.weightMatrix[i] + speedLearn * error * this.imageArray[i]).toFixed(2))
+          this.weightMatrix[i] = Number((this.weightMatrix[i] + speedLearn * this.error * this.imageArray[i]).toFixed(2))
         }       
       }
       console.log('')
@@ -132,6 +136,13 @@ export default {
       return sum
     },
 
+    setCross(){
+      this.error = 1
+    },
+    setCircle(){
+      this.error = -1
+    },
+
     save(content) {
       const a = document.createElement('a');
 
@@ -150,25 +161,24 @@ export default {
 
       reader.readAsText(file);
 
-      reader.onload = function (f) {
-        return function(e){
+      reader.onload = function () { 
+        let res = reader.result;
+        
+        res = res.split(',');
+        res = res.map((e) => Number(e));
 
-          let res = reader.result;
 
-          res = res.split(',');
-          res = res.map((e) => Number(e));
-          
-          store.commit('setWeight', res)
-          console.log('Загруженные веса:');
 
-          console.log(store.state.weight)
-        }
-      }(file);
-      console.log(store.state.weight)
-
+        // console.log('Загруженные веса:');
+        // console.log(res);
+        store.commit('setWeight', res)
+        // console.log(store.state.weight)
+      };
+      // console.log(store.state.weight)
       reader.onerror = function () {
         console.log(reader.error);
       };
+      // console.log(store.state.weight)  
     }
     
   },
