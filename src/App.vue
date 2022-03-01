@@ -1,6 +1,6 @@
 <template>
   <v-app class="">
-    <div class="pa-3 main">
+    <div class="pa-3">
 
       <v-sheet class="">
         <h1 class="">Рисовалка</h1>
@@ -28,18 +28,13 @@
           <v-btn color="primary" @click="setCross(); recalculateWeights()" class="mr-2">Крестик </v-btn>
           <v-btn color="primary" @click="setCircle(); recalculateWeights()">Нолик</v-btn>
         </div>
-        <!-- <div class="py-2">
-          <v-btn color="primary" @click="recalculateWeights()" class="mr-4">Корректировка</v-btn>
-        </div> -->
         <div class="">
           <v-btn color="primary" @click="save(weightMatrix)">Сохранить веса</v-btn>
         </div>
         <div class="mt-2">
           <v-btn color="primary" @click="$refs.inputUpload.click()">Загрузить веса</v-btn> 
           <input v-show="false" ref="inputUpload" type="file" id="load" @change="(e) => processFile(e)">
-        </div>
-        <!-- <v-btn @click="test()"></v-btn> -->
-        
+        </div>        
       </v-sheet>
 
     </div>
@@ -59,23 +54,16 @@ export default {
     image: "",
     width: 150,
     height: 150,
-    canvas: "canva",
     line: 25,
-    imageSmall: '',
     sketch: "sketch",
-    thumbnail: "thumbnail",
+    thumb: "thumbnail",
     imageArray: null,
     weightMatrix: null,
     neuroSum: 0,
     error: 0,
-    file: null
   }),
 
   methods: {
-    test(){
-      console.log(this.weightMatrix)
-    },
-
     calculateWeights(){
       let weightMax = 0.3
       let weightMin = -weightMax
@@ -83,18 +71,18 @@ export default {
     },
     
     predict(){
-      if (this.$refs.sketch.isEmpty() == false){
-        this.imageArray = this.imageData(this.width, this.height)
-        this.neuroSum = this.calculateSum(this.imageArray, this.weightMatrix)
-        if (this.neuroSum >= 0){
-          alert('Крест')
-        }
-        else{
-          alert('Круг')
-        }
-        this.$refs.sketch.reset()
+      if (this.$refs.sketch.isEmpty() == true){
+        return alert('Нарисуйте что-нибудь')
       }
-      else alert('Нарисуйте что-нибудь')
+      this.imageArray = this.imageData(this.width, this.height)
+      this.neuroSum = this.calculateSum(this.imageArray, this.weightMatrix)
+      if (this.neuroSum >= 0){
+        alert('Крест')
+      }
+      else{
+        alert('Круг')
+      }
+      this.$refs.sketch.reset()
     },
 
     recalculateWeights(){
@@ -104,9 +92,9 @@ export default {
           this.weightMatrix[i] = Number((this.weightMatrix[i] + speedLearn * this.error * this.imageArray[i]).toFixed(2))
         }       
       }
-      console.log('')
-      console.log(this.weightMatrix)
+      console.log('Корректировка весов')
     },
+
     imageData(width, height){
       let context = document.getElementById('sketch').getContext('2d').getImageData(0, 0, width, height).data
       let array = Array.from(context)
@@ -126,7 +114,7 @@ export default {
       for (let i = 0; i < width * height; i++) {
         weights.push(Number((Math.random() * (max - min) + min).toFixed(2)))        
       }
-      console.log(weights)
+      console.log('Веса инициализированы')
       return weights
     },
     
@@ -154,61 +142,40 @@ export default {
       a.href = URL.createObjectURL(file);
       a.download = 'weights.txt';
       a.click();
+      console.log('Веса сохранены')
 
       URL.revokeObjectURL(a.href);
     },
-    // load(e) {
-    //   const file = e.target.files[0];
-
-    //   let reader = new FileReader();
-
-    //   reader.readAsText(file);
-
-    //   reader.onload = function () { 
-    //     let res = reader.result;
-        
-    //     res = res.split(',');
-    //     res = res.map((e) => Number(e));
-
-    //     console.log('Загруженные веса:');
-    //     store.commit('setWeight', res)
-    //   };
-    //   reader.onerror = function () {
-    //     console.log(reader.error);
-    //   };
-    // }
     
-  readFileAsync(file) {
-  return new Promise((resolve, reject) => {
-    let reader = new FileReader();
+    readFileAsync(file) {
+      return new Promise((resolve, reject) => {
+        let reader = new FileReader();
 
-    reader.onload = () => {
-      resolve(reader.result);
-    };
+        reader.onload = () => {
+          resolve(reader.result);
+        };
 
-    reader.onerror = reject;
+        reader.onerror = reject;
 
-    reader.readAsText(file);
-  })
-},
+        reader.readAsText(file);
+      })
+    },
 
-async processFile(e) {
-  try {
-    let file = e.target.files[0];
-    let text = await this.readFileAsync(file);
-    text = text.split(',')
-    text = text.map((n) => Number(n))
-    console.log(text);
-    this.weightMatrix = text
-  } catch(err) {
-    console.log(err);
+    async processFile(e) {
+      try {
+        let file = e.target.files[0];
+        let text = await this.readFileAsync(file);
+        text = text.split(',')
+        text = text.map((n) => Number(n))
+        this.weightMatrix = text
+        console.log('Веса загружены')
+      } catch(err) {
+        console.log(err);
+      }
   }
-}
 
   },
-  computed: {
 
-  },
   mounted(){
     this.calculateWeights()
   }
@@ -217,15 +184,3 @@ async processFile(e) {
 
 </script>
 
-<style>
-.button-container {
-  display: flex;
-  flex-direction: row;
-  /* justify-content: space-between; */
-}
-.main{
-  width: 295px;
-}
-
-
-</style>
