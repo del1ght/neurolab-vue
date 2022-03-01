@@ -1,6 +1,6 @@
 <template>
   <v-app class="">
-    <div class="pa-3">
+    <div class="pa-3 main">
 
       <v-sheet class="">
         <h1 class="">Рисовалка</h1>
@@ -33,9 +33,13 @@
         </div> -->
         <div class="">
           <v-btn color="primary" @click="save(weightMatrix)">Сохранить веса</v-btn>
-           <!-- <input type="file" id="load" @change="(e) => load(e)">  -->
-           <v-btn @click="test()"></v-btn>
         </div>
+        <div class="mt-2">
+          <v-btn color="primary" @click="$refs.inputUpload.click()">Загрузить веса</v-btn> 
+          <input v-show="false" ref="inputUpload" type="file" id="load" @change="(e) => processFile(e)">
+        </div>
+        <!-- <v-btn @click="test()"></v-btn> -->
+        
       </v-sheet>
 
     </div>
@@ -44,8 +48,6 @@
 
 <script>
 import VueDrawingCanvas from 'vue-drawing-canvas';
-import store from './store/index'
-
 export default {
   name: 'App',
 
@@ -66,6 +68,7 @@ export default {
     weightMatrix: null,
     neuroSum: 0,
     error: 0,
+    file: null
   }),
 
   methods: {
@@ -154,33 +157,54 @@ export default {
 
       URL.revokeObjectURL(a.href);
     },
-    load(e) {
-      const file = e.target.files[0];
+    // load(e) {
+    //   const file = e.target.files[0];
 
-      let reader = new FileReader();
+    //   let reader = new FileReader();
 
-      reader.readAsText(file);
+    //   reader.readAsText(file);
 
-      reader.onload = function () { 
-        let res = reader.result;
+    //   reader.onload = function () { 
+    //     let res = reader.result;
         
-        res = res.split(',');
-        res = res.map((e) => Number(e));
+    //     res = res.split(',');
+    //     res = res.map((e) => Number(e));
 
-
-
-        // console.log('Загруженные веса:');
-        // console.log(res);
-        store.commit('setWeight', res)
-        // console.log(store.state.weight)
-      };
-      // console.log(store.state.weight)
-      reader.onerror = function () {
-        console.log(reader.error);
-      };
-      // console.log(store.state.weight)  
-    }
+    //     console.log('Загруженные веса:');
+    //     store.commit('setWeight', res)
+    //   };
+    //   reader.onerror = function () {
+    //     console.log(reader.error);
+    //   };
+    // }
     
+  readFileAsync(file) {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+
+    reader.onerror = reject;
+
+    reader.readAsText(file);
+  })
+},
+
+async processFile(e) {
+  try {
+    let file = e.target.files[0];
+    let text = await this.readFileAsync(file);
+    text = text.split(',')
+    text = text.map((n) => Number(n))
+    console.log(text);
+    this.weightMatrix = text
+  } catch(err) {
+    console.log(err);
+  }
+}
+
   },
   computed: {
 
@@ -198,6 +222,9 @@ export default {
   display: flex;
   flex-direction: row;
   /* justify-content: space-between; */
+}
+.main{
+  width: 295px;
 }
 
 
